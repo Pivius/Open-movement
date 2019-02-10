@@ -2,6 +2,7 @@
 Open source walljump gamemode.
 
 The server config should look something like this.
+
     sv_accelerate 0
     sv_friction 0
     sv_airaccelerate 0
