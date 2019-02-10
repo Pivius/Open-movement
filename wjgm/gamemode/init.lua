@@ -5,11 +5,11 @@ DEFINE_BASECLASS( 'gamemode_base' )
 
 function GM:Initialize()
 	game.ConsoleCommand('sv_maxvelocity 9999\n')
-	game.ConsoleCommand( 'sv_friction 8\n' )
+	game.ConsoleCommand( 'sv_friction 0\n' )
 	game.ConsoleCommand( 'sv_gravity 300\n' )
 	game.ConsoleCommand('sv_sticktoground 0\n')
-	game.ConsoleCommand('sv_airaccelerate 10\n')
-	game.ConsoleCommand('sv_accelerate 10\n')
+	game.ConsoleCommand('sv_airaccelerate 0\n')
+	game.ConsoleCommand('sv_accelerate 0\n')
 	game.ConsoleCommand('mp_falldamage 0\n')
 end
 
