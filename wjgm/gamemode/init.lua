@@ -42,4 +42,4 @@ timer.Create( "HostnameThink", 30, 0, HostnameThink )
 
 function GM:GetFallDamage( ply, speed )
 	 return ( speed / 50)
-end 
+end
