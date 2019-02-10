@@ -17,7 +17,8 @@ hook.Add("OnEntityCreated","WallJump_InitPlayer",function(ply)
 	ply.rebound_power = 260
 	ply.vertical_power = 200
 	ply.can_walljump = true
-	ply.sync_samples_walljump = {}
+	ply.wj_sync_module = load.Module( "modules/sync.lua" )
+  ply.wj_sync_module.Insert(false, CurTime())
 end)
 
 /*
@@ -78,18 +79,13 @@ end
 */
 function WallJump(ply, mv, cmd)
 	local tick_count = cmd:TickCount()
-
-	if !ply.can_walljump || ply.is_sliding || table.HasValue(ply.sync_samples_wallslide, tick_count) || !ply:Alive() then return end
 	local cur_time		= CurTime()
+	if !ply.ws_sync_module then return end
+	if !ply.can_walljump || ply.is_sliding || ply.ws_sync_module.GetByTime(cur_time) || !ply:Alive() then return end
 	local vVelocity = Vector(0,0,0) -- Kick velocity
 	local vel = mv:GetVelocity()		-- Velocity
-	if #ply.sync_samples_walljump > 0 then
-		if #ply.sync_samples_walljump >= 10 then
-			table.remove(ply.sync_samples_walljump, #ply.sync_samples_walljump)
-		end
-	end
 
-	if table.HasValue(ply.sync_samples_walljump, tick_count) || cur_time >= ply.wj_cooldown then
+	if ply.wj_sync_module.GetByTime(cur_time) || cur_time >= ply.wj_cooldown then
 
 		local vForward = mv:GetAngles()
 		vForward:RotateAroundAxis( Vector(0,0,1),90 )
@@ -110,9 +106,7 @@ function WallJump(ply, mv, cmd)
   		vVelocity = (ply.vDir * ply.rebound_power)
   		vVelocity.z = ply.vertical_power
   		mv:SetVelocity(vVelocity+vel)
-			if !table.HasValue(ply.sync_samples_walljump, tick_count) then
-				table.insert(ply.sync_samples_walljump, 1, tick_count)
-			end
+			ply.wj_sync_module.Insert(true, cur_time)
       --ply.sync_samples_walljump[tick_count] = true
   		if IsFirstTimePredicted() then
   			if CLIENT then

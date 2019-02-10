@@ -5,12 +5,12 @@ local load = {}
 local GM_PATH = GM.Folder:gsub("gamemodes/", "") .. "/gamemode/"
 
 load.AddCL = function(path)
-  local FILE_PATH = path
+  local FILE_PATH = GM_PATH .. path
 
   if string.GetExtensionFromFilename(path) != "lua" then
     FILE_PATH = GM_PATH .. path .. "/*"
     local files, dirs = file.Find(FILE_PATH, "LUA")
-  
+
     for _, v in pairs(files) do
       if SERVER then
         AddCSLuaFile(path .. "/" .. v)
@@ -32,7 +32,7 @@ load.AddCL = function(path)
 end
 
 load.AddSV = function(path)
-  local FILE_PATH = path
+  local FILE_PATH = GM_PATH .. path
   if string.GetExtensionFromFilename(path) != "lua" then
     FILE_PATH = GM_PATH .. path .. "/*"
     local files, dirs = file.Find(FILE_PATH, "GAME")
@@ -70,7 +70,7 @@ local function ExecuteOnFolder(dir, recursive, func)
   end
 */
 load.AddSH = function(path)
-  local FILE_PATH = path
+  local FILE_PATH = GM_PATH .. path
   if string.GetExtensionFromFilename(path) != "lua" then
     FILE_PATH = GM_PATH .. path .. "/*"
     local files, dirs = file.Find(FILE_PATH, "LUA")
@@ -97,4 +97,51 @@ load.AddSH = function(path)
     end
   end
 end
+
+load.AddModule = function(path)
+  local FILE_PATH = GM_PATH .. path
+  if string.GetExtensionFromFilename(path) != "lua" then
+    FILE_PATH = GM_PATH .. path .. "/*"
+    local files, dirs = file.Find(FILE_PATH, "LUA")
+    for _, v in pairs(files) do
+      if SERVER then
+        AddCSLuaFile(path .. "/" .. v)
+        MsgC( Color(250, 255, 0), "[MODULE] Loaded module '" .. GM_PATH .. path .. "/" .. v .. "'", "\n" )
+      end
+    end
+  else
+    if SERVER then
+      AddCSLuaFile(FILE_PATH)
+      MsgC( Color(250, 255, 0), "[MODULE] Loaded module '" .. GM_PATH .. path .. "'", "\n" )
+    end
+  end
+end
+
+load.Module = function(path)
+  local FILE_PATH = GM_PATH .. path
+
+  if string.GetExtensionFromFilename(path) != "lua" then
+    FILE_PATH = GM_PATH .. path .. "/*"
+    local files, dirs = file.Find(FILE_PATH, "LUA")
+    for _, v in pairs(files) do
+
+      if SERVER then
+        MsgC( Color(0, 56, 255), "[MODULE] Loaded server file '" .. GM_PATH .. path .. "/" .. v .. "'", "\n" )
+        return include(path .. "/" .. v)
+      else
+        MsgC( Color(0, 56, 255), "[MODULE] Loaded client file '" .. GM_PATH .. path .. "/" .. v .. "'", "\n" )
+        return include(path .. "/" .. v)
+      end
+    end
+  else
+    if SERVER then
+      MsgC( Color(0, 56, 255), "[MODULE] Loaded server file '" .. GM_PATH .. path .. "'", "\n" )
+      return include(FILE_PATH)
+    else
+      MsgC( Color(0, 56, 255), "[MODULE] Loaded client file '" .. GM_PATH .. path .. "'", "\n" )
+      return include(FILE_PATH)
+    end
+  end
+end
+
 return load

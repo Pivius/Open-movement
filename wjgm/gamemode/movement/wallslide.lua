@@ -9,7 +9,9 @@ hook.Add("OnEntityCreated","WallSlide_InitPlayer",function(ply)
   ply.can_wallslide = true
   ply.is_sliding = false
 	ply.slide_time = 0
-	ply.sync_samples_wallslide = {}
+	ply.ws_sync_module = load.Module( "modules/sync.lua" )
+  ply.ws_sync_module.Insert(false, CurTime())
+
 end)
 
 /*
@@ -55,17 +57,15 @@ function PLAYER:StartSlide(time, velocity, tick)
 	-- Update once when the player starts wallsliding.
 	-- Only keeping this in for lSD.
 	if self.is_sliding && IsFirstTimePredicted() then return end
-		self.slide_time = time
-		self.slide_vel = velocity
-		self.slide_vel.z = 0
-		if !self.ebtimer || self.ebtimer < time || self.eb > 3 then
-			self.eb = 0
-			self.ebtimer = time + 0.65
-		end
-		self.is_sliding = true
-	if !table.HasValue(self.sync_samples_wallslide, tick) then
-		table.insert(self.sync_samples_wallslide, 1, tick)
+	self.slide_time = time
+	self.slide_vel = velocity
+	self.slide_vel.z = 0
+	if !self.ebtimer || self.ebtimer < time || self.eb > 3 then
+		self.eb = 0
+		self.ebtimer = time + 0.65
 	end
+	self.is_sliding = true
+	self.ws_sync_module.Insert(true, tick)
 end
 
 /*
@@ -82,9 +82,7 @@ function MOVE:Slide(ply, tick)
 	local bleed = math.max(5/(CurTime()-ply.slide_time+5), 0)
 	-- Apply velocity bleeding while the player is sliding.
   self:SetVelocity(((bleed * ply.slide_vel) + (aimvec * (400 * math.min((CurTime()-ply.slide_time)/5, 1)))))
-	if !table.HasValue(ply.sync_samples_wallslide, tick) then
-		table.insert(ply.sync_samples_wallslide, 1, tick)
-	end
+	ply.ws_sync_module.Insert(true, tick)
 end
 
 /*
@@ -113,19 +111,15 @@ function WallSlide(ply, mv, cmd)
 	local cur_time = CurTime()
 	local tick_count = cmd:TickCount()
 	local can_slide, fwd_trace, bk_trace = ply:CanWallSlide(tick_count)
-	if #ply.sync_samples_wallslide > 0 then
-		if #ply.sync_samples_wallslide >= 10 then
-			table.remove(ply.sync_samples_wallslide, #ply.sync_samples_wallslide)
-		end
-	end
-	if (!can_slide || (ply.slide_time+10 < cur_time && ply.is_sliding)) || table.HasValue(ply.sync_samples_walljump, tick_count) then
+
+	if (!can_slide || (ply.slide_time+10 < cur_time && ply.is_sliding)) then
 		ply:StopSlide()
 		return
 	end
 	if can_slide then
 		ply:StartSlide(cur_time, mv:GetVelocity(), tick_count)
 	end
-	if (ply.is_sliding && can_slide) || table.HasValue(ply.sync_samples_wallslide, tick_count)  then
+	if (ply.is_sliding && can_slide) || ply.ws_sync_module.GetByTime(cur_time)  then
 		mv:Slide(ply, tick_count)
 	end
 	-- Emergency braking, also stops fence riding. Remove these lines to enable fence riding.
