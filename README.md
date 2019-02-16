@@ -16,7 +16,7 @@ The server config should look something like this.
     sv_accelerate 0
     sv_friction 0
     sv_airaccelerate 0
-    sv_gravity 0
+    sv_gravity 300
     sv_maxrate 0
     sv_minrate 100000
     sv_maxupdaterate 99

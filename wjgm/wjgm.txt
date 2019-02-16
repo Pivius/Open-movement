@@ -1,6 +1,0 @@
-"wjgm"
-{
-	"title"		"wjgm"
-	"base"		"base"
-	"menusystem"	"1"
-}
