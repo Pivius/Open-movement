@@ -26,3 +26,5 @@ To change the tickrate to 100 you add the follow line to launch options:
 
     -tickrate 100
    
+
+Note that this gamemode works poorly in singleplayer.
