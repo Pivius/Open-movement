@@ -10,14 +10,37 @@ GM.Website		= ""
 GM.TeamBased	= false
 
 
-
+load.AddSV( "resource.lua" )
 load.AddSH( "settings.lua" )
 load.AddModule( "modules/sync.lua" )
+load.AddModule( "modules/ease.lua" )
+-- Libraries
+load.AddSH( "libraries/bench.lua" )
+load.AddCL( "libraries/font.lua" )
+load.AddCL( "libraries/draw.lua" )
 
 load.AddSH( "utils" )
 load.AddSH( "shared" )
 load.AddSH( "movement" )
+load.AddSV( "server" )
+
+load.AddCL( "client/hud/preset/preset.lua" )
+load.Ignore( "client/hud/preset/preset_hud")
+load.Ignore( "client/hud/hudmod.lua" )
+load.Ignore( "client/hud/hud.lua" )
+load.Ignore( "client/hud/keyecho.lua" )
+
 load.AddCL( "client" )
+load.UnIgnore( "client/hud/preset/preset_hud")
+load.UnIgnore( "client/hud/hudmod.lua" )
+load.UnIgnore( "client/hud/hud.lua" )
+load.UnIgnore( "client/hud/keyecho.lua" )
+if CLIENT then
+	load.AddCL( "client/hud/preset/preset_hud" )
+end
+load.AddCL( "client/hud/hudmod.lua" )
+load.AddCL( "client/hud/hud.lua" )
+load.AddCL( "client/hud/keyecho.lua" )
 
 hook.Add("OnEntityCreated","Core_InitPlayerSpawn",function(ply)
   local plMeta = getmetatable(ply)

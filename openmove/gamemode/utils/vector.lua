@@ -6,7 +6,7 @@ local VECTOR_META = FindMetaTable("Vector")
 
 
 /*
-  NAME - Clear
+  NAME     - Clear
   FUNCTION - Clears vectors
 */
 
@@ -21,14 +21,14 @@ function VECTOR_META:Clear()
 end
 
 /*
-  NAME - Clamp
+  NAME     - Clamp
   FUNCTION - Clamps a vector
 */
 
 function util.Vector.Clamp(input, min, max)
   input.x = math.Clamp(input.x, min.x, max.x)
   input.y = math.Clamp(input.y, min.y, max.y)
-  input.z = math.Clamp(input.z, min.z, maxzx)
+  input.z = math.Clamp(input.z, min.z, max.z)
   return input
 end
 
@@ -38,7 +38,7 @@ function VECTOR_META:Clamp(min, max)
 end
 
 /*
-  NAME - GetMax
+  NAME     - GetMax
   FUNCTION - Returns the highest number in vector a
 */
 
@@ -51,7 +51,7 @@ function VECTOR_META:GetMax()
 end
 
 /*
-  NAME - vectorMin
+  NAME     - vectorMin
   FUNCTION - Returns the lowest number in vector a
 */
 
@@ -64,7 +64,7 @@ function VECTOR_META:GetMin()
 end
 
 /*
-  NAME - vectorScale
+  NAME     - vectorScale
   FUNCTION - Scales vector a with b and outputs to c
 */
 
@@ -85,7 +85,7 @@ function VECTOR_META:Scale(scale, out)
 end
 
 /*
-  NAME - Round
+  NAME     - Round
   FUNCTION - Rounds vector a with n decimals
 */
 
@@ -107,7 +107,7 @@ function VECTOR_META:Round(n)
 end
 
 /*
-  NAME - Fill
+  NAME     - Fill
   FUNCTION - Fills a vector a with b
 */
 
@@ -124,7 +124,7 @@ function VECTOR_META:Fill(b)
 end
 
 /*
-  NAME - Negate
+  NAME     - Negate
   FUNCTION - Negates a table
 */
 
@@ -139,7 +139,7 @@ function VECTOR_META:Negate()
 end
 
 /*
-  NAME - Normalize2
+  NAME     - Normalize2
   FUNCTION -
 */
 function util.Vector.Normalize2(inn, out)
@@ -167,7 +167,7 @@ function VECTOR_META:Normalize2()
 end
 
 /*
-  NAME - MA
+  NAME     - MA
   FUNCTION - Scales a vector along chosen direction.
 */
 function util.Vector.MA(a, scale, dir, b)
@@ -184,6 +184,62 @@ function VECTOR_META:MA(scale, dir, out)
   util.Vector.MA(self, scale, dir, out)
   self:Set(out)
   return self
+end
+
+/*
+  NAME     - NearestPoint
+  FUNCTION - Will return the nearest point on a line to a point. Useful for making an object follow a track.
+  ARGS 		 -
+  ls  - Linestart
+  le  - Lineend
+  p   - Point
+*/
+function util.Vector.NearestPoint(ls, le, p)
+	local lineDirection = le - ls
+  lineDirection:Normalize()
+  local closestPoint = (p - ls):Dot(lineDirection)
+  return ls + (closestPoint * lineDirection)
+end
+
+function VECTOR_META:NearestPoint(le, p)
+  self = util.Vector.NearestPoint(self, le, p)
+end
+
+/*
+  NAME     - NearestPointStrict
+  FUNCTION - Works like NearestPoint except the end of the line is clamped.
+  ARGS 		 -
+  ls  - Linestart
+  le  - Lineend
+  p   - Point
+*/
+function util.Vector.NearestPointStrict(ls, le, p)
+  local fullDirection = le - ls
+	local lineDirection = Vector(0,0,0)
+  lineDirection:Set(fullDirection)
+  lineDirection:Normalize()
+  local closestPoint = (p - ls):Dot(lineDirection)
+  return ls + (math.Clamp(closestPoint, 0, fullDirection:Length()) * lineDirection)
+end
+
+function VECTOR_META:NearestPointStrict(le, p)
+  self = util.Vector.NearestPointStrict(self, le, p)
+end
+
+/*
+  NAME     - Approx
+  FUNCTION - Test if a Vector3 is close to another Vector3
+  ARGS 		 -
+  val   - First vector
+  about - Second vector
+  range - Distance check
+*/
+function util.Vector.Approx(val, about, range)
+  return ((val - about):LengthSqr() < range * range)
+end
+
+function VECTOR_META:Approx(about, range)
+  return util.Vector.Approx(self, about, range)
 end
 
 util.v = util.Vector

@@ -11,7 +11,6 @@ hookAdd("Init_Player_Vars", "Init_Wallslide", function(ply)
   ply:AddSettings("slide_tick", 0)
   ply:AddSettings("slide_vel", 0)
   ply:AddSettings("release_tick", 0)
-  print("a")
   ply.ws_sync_module = load.Module( "modules/sync.lua" )
 	ply.ws_sync_module.Insert(false, CurTime())
 end)
@@ -114,7 +113,7 @@ function PLAYER:StopSlide(time, tick)
 end
 
 hook.Add("WallKicked", "Disable WS on WJ", function(ply, time, tick)
-  if !ply.is_sliding then return end
+  if !ply:is_sliding() then return end
   ply:StopSlide(time, tick)
   ply:try_slide(false) -- Completely disable m2
 end)

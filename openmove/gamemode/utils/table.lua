@@ -143,7 +143,8 @@ end
   FUNCTION - Removes key from table
 */
 function util.Table.RemoveByValue(table, val)
-    local element = table[util.Table.GetByValue(table, val)]
+  local element = table[util.Table.GetByValue(table, val)]
+  if !element then return end
     table[util.Table.GetByValue(table, val)] = nil
     return element
 end

@@ -217,6 +217,7 @@ end
 function CPM_PM_Aircontrol(ply, mv, wishdir, wishspeed, aircontrol )
 	local cpm_pm_aircontrol = aircontrol
 	local	zspeed, speed, dot, k;
+
 	if ( (ply:movement_dir() != 0) || wishspeed == 0) then
   	return; // can't control movement if not moveing forward or backward
   end
@@ -289,8 +290,11 @@ function PM_AirMove( ply, mv, cmd, airaccel, airstop, aircontrol, strafeaccel, w
 			wishspeed = cpm_pm_wishspeed;
 
     end
-		accel = cpm_pm_strafeaccelerate;
+		accel = cpm_pm_strafeaccelerate
+  elseif ply:movement_dir() == 0 || ply:movement_dir() == 4 then
+    accel = cpm_pm_airstopaccelerate
 	end
+
   ply.wishspeedTest = wishspeed
 	// not on ground, so little effect on velocity
   --PM_Accelerate (wishdir, wishspeed, pm_airaccelerate, mv);

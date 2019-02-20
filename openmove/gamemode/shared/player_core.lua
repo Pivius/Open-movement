@@ -49,10 +49,21 @@ hook.Add('PlayerDisconnected', 'Core_Player_Disc', function( ply )
 
 end)
 
+hook.Add('OnPlayerHitGround', 'TouchedGround', function( ply, water, floater, speed )
+--ply:SetMaterial( "models/Health_model/Health_model_texture" )
+
+  ply:LeftGround(false)
+end)
+
+hook.Add('PlayerLeftGround', 'LeftGround', function( ply )
+  ply:LeftGround(true)
+  ply:SlopeFix_InAir(true)
+  --  print("a")
+end)
 
 --Player Regeneration
 function Regen(ply)
-    local delay = 0.5
+    local delay = 1
     if CurTime() > ((ply.LastHeal or 0) + delay) then
       if ply:Health() < 100 then
         ply.LastHeal = CurTime()

@@ -8,7 +8,7 @@ hookAdd("Init_Player_Vars", "Init_Grapple", function(ply)
   ply:AddSettings("AllowGrapple", true)        -- Decides if the player can grapple
   ply:AddSettings("Grappling", false)          -- Is the player grappling or not
   ply:AddSettings("Retracting", false)         -- Is the player retracting or not
-  ply:AddSettings("RetractSpeed", 150)         -- The speed the player retracts at
+  ply:AddSettings("RetractSpeed", 50)         -- The speed the player retracts at. Old = 150
   ply:AddSettings("RopeTension", 0)            -- Rope tension
   ply:AddSettings("RopeLength", 0)             -- Rope length
   ply:AddSettings("GrappleSync", {})           -- Sync table
@@ -22,6 +22,7 @@ hookAdd("Init_Player_Vars", "Init_Grapple", function(ply)
 end)
 // Returns true if the player can grapple
 function PLAYER:CanGrapple()
+
   local tracedata = {}
   tracedata.start = self:EyePos()
   tracedata.endpos = self:TracePos()
