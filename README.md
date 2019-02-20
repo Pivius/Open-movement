@@ -10,6 +10,10 @@ To switch between movement modes you use the console command:
     3. RadioSkate
     4. VQ3
     5. CPMA
+    6. Bhop
+    7. Momentum
+
+You can spectate other players by typing spectate 'nick' in console.
 
 The server config should look something like this.
 
