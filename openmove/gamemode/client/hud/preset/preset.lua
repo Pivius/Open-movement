@@ -55,6 +55,29 @@ function presets.create(p, func)
 end
 
 /*
+  NAME      - isLoaded
+  FUNCTION  - Checks to see if a preset is loaded
+  ARGS 			-
+    p - Name of the preset
+*/
+function presets.isLoaded(p)
+  if preset.loaded_presets[p] then
+    return true
+  end
+  return false
+end
+
+/*
+  NAME      - isEnabled
+  FUNCTION  - Checks to see if a preset is loaded
+  ARGS 			-
+    p - Name of the preset
+*/
+function presets.isEnabled(p)
+  return preset.enabled_presets[p]
+end
+
+/*
   NAME      - remove
   FUNCTION  - Removes a preset completely
   ARGS 			-
