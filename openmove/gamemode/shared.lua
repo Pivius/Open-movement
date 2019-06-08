@@ -18,7 +18,7 @@ load.AddModule( "modules/ease.lua" )
 load.AddSH( "libraries/bench.lua" )
 load.AddCL( "libraries/font.lua" )
 load.AddCL( "libraries/draw.lua" )
-
+load.AddCL( "libraries/vgui" )
 load.AddSH( "utils" )
 load.AddSH( "shared" )
 load.AddSH( "movement" )

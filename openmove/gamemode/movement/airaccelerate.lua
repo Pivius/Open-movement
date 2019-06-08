@@ -219,7 +219,7 @@ function CPM_PM_Aircontrol(ply, mv, wishdir, wishspeed, aircontrol )
 	local	zspeed, speed, dot, k;
 
 	if ( (ply:movement_dir() != 0) || wishspeed == 0) then
-  	return; // can't control movement if not moveing forward or backward
+  	return; -- can't control movement if not moveing forward or backward
   end
 
 	zspeed = mv:GetVelocity().z
@@ -230,11 +230,16 @@ function CPM_PM_Aircontrol(ply, mv, wishdir, wishspeed, aircontrol )
 	dot = vel:Dot(wishdir)
 	k = 32;
 	k = k * (cpm_pm_aircontrol*dot*dot*FrameTime())
-	if (dot > 0) then	// we can't change direction while slowing down
+	if (dot > 0) then	-- we can't change direction while slowing down
     vel=((vel*speed) + (wishdir*k))
     VectorNormalize( vel )
 
 	end
+  if ut_math.IsNan(vel:Length()) then
+    vel = mv:GetVelocity()
+  end
+
+  print(vel:Length())
 	mv:SetVelocity(vel*speed)
   mv:SetVelocity(mv:GetVelocity()+Vector(0,0,zspeed))
 end
@@ -271,7 +276,7 @@ function PM_AirMove( ply, mv, cmd, airaccel, airstop, aircontrol, strafeaccel, w
 	wishspeed:Normalize()
   wishspeed = wishspeed:Length()
 
-  wishspeed = wishspeed * mv:GetMaxSpeed()
+  wishspeed = wishspeed * 300 --mv:GetMaxSpeed()
   wishdir = wishvel
 
 	// CPM: Air Control
@@ -299,6 +304,7 @@ function PM_AirMove( ply, mv, cmd, airaccel, airstop, aircontrol, strafeaccel, w
 	// not on ground, so little effect on velocity
   --PM_Accelerate (wishdir, wishspeed, pm_airaccelerate, mv);
 	// CPM: Air control
+
 	PM_Accelerate (ply, wishdir, wishspeed, accel, mv);
   --AirAccelerate( ply, mv, cmd, 10, 10 )
 	if (cpm_pm_aircontrol>0 ) then

@@ -34,9 +34,7 @@ PLAYER.CanUseFlashlight     = false		-- Can we use the flashlight
 --
 -- See gamemodes/base/player_class/player_default.lua for all overridable variables
 --
-PLAYER.WalkSpeed 			= 400
-PLAYER.RunSpeed				= 400
-PLAYER.JumpPower			= 220
+
 
 --
 -- Set up the network table accessors

@@ -96,14 +96,14 @@ local function keyEchoes(ply, scrw, scrh, keyecho)
   global_vars = keyecho
   local localPly = Spectate.IsSpectating(ply) or ply
   local w_def, h_def     = 100, 90         // Width and Height
-  local x_def, y_def     = 0, scrh/2      // X and Y position
+  local x_def, y_def     = -50, scrh/2      // X and Y position
   local alpha    = 200
-  local color    = ColorAlpha(ut_col_pal.AZURE, alpha):Sub(Color(40,40,40)) 
+  local color    = ColorAlpha(ut_col_pal.AZURE, alpha):Sub(Color(40,40,40))
   local echo_col = ColorAlpha(ut_col_pal.AZURE, alpha)
   local gap      = 1
   local dist     = 5
   //Easing
-
+  local c
 
   // Draws the boxes
 

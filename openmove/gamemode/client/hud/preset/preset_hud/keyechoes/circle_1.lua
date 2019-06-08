@@ -29,12 +29,12 @@ local keys = {
   [7] = {key = "M1", times_pressed = 0, enum = IN_ATTACK, down = false, ease = ease_module.new(1, table.Copy(easing), {}, "outExpo")},
   [8] = {key = "M2", times_pressed = 0, enum = IN_ATTACK2, down = false, ease = ease_module.new(1, table.Copy(easing), {}, "outExpo")},
 }
-
+local circle_tex = Material("openmove/shapes/circles/circle_128.png", "noclamp")
 local function KeyDown(ply, key, enum, x, y, w, h, t, col, txtcol)
   local key_input = key.key
-  SetFont("HUD Key_echoes", { font = "Trebuchet24", weight = 2, size = 40 })
+  SetFont("HUD Key_echoes", { font = "Gidole", weight = 2, size = 40 })
   if keyEnum:KeyDown(ply, enum) && !key.down then
-    key.ease:Target({["w"] = (math.max(w,h)/2), alpha = 225, r = col.r, g = col.g, b = col.b}, true)
+    key.ease:Target({["w"] = (math.max(w,h)), alpha = 225, r = col.r, g = col.g, b = col.b}, true)
     key.down = true
     key.times_pressed = key.times_pressed +1
   elseif !keyEnum:KeyDown(ply, enum) && key.down then
@@ -46,31 +46,28 @@ local function KeyDown(ply, key, enum, x, y, w, h, t, col, txtcol)
   key.ease:update(2)
 
   if !ut_ease.Approx(key.ease:get().alpha, 0, 2) then
-    local vertices = {}
-    for degree=0,360,4 do
-      local x1,y1 = math.cos(math.rad(degree)) * key.ease:get()["w"] + (x + (w)/2), math.sin(math.rad(degree)) * key.ease:get()["w"] + (y + (h)/2)
-      table.insert(vertices, {x=x1,y=y1})
-    end
-    local color = ut_col.Pack(key.ease:get().r, key.ease:get().g, key.ease:get().b)
-    surface.SetDrawColor(ColorAlpha(color,  math.max(key.ease:get().alpha, 0)))
-    surface.DrawPoly(vertices)
+    local color = ColorAlpha(ut_col.Pack(key.ease:get().r, key.ease:get().g, key.ease:get().b),  math.max(key.ease:get().alpha, 0))
+    surface.SetDrawColor(color)
+    surface.SetMaterial( circle_tex )
+    surface.DrawTexturedRect(x + (math.max(w,h)/2) - (key.ease:get().w/2), y + (math.max(w,h)/2) - (key.ease:get().w/2), key.ease:get().w, key.ease:get().w)
   end
   surface.SetTextColor( ColorAlpha(txtcol,  math.max(key.ease:get().alpha, 20) ))
-  draw.Text(key_input, x + w / 2, y + (h / 2), 2, 1, 0.5)
-  --surface.DrawPoly(vertices)
+
+  draw_lib.Text(key_input, x + w / 2, y + (h / 2), 2, 1, 0.5)
   --render.SetStencilEnable( false )
 end
 
-local function keyEchoes(ply, scrw, scrh, keyecho)
-  global_vars = keyecho
-  local localPly = Spectate.IsSpectating(ply) or ply
-  local w, h     = 100, 100         // Width and Height
-  local x, y     = 0, scrh/2      // X and Y position
-  local alpha    = 200
-  local color    = ColorAlpha(ut_col_pal.WHITE, alpha)
-  local echo_col = ColorAlpha(ut_col_pal.AZURE, 100)
-  local gap      = 2
-  local t        = 5
+local function keyEchoes(ply, scrw, scrh, keyecho, cx, cy)
+  global_vars        = keyecho
+  local localPly     = Spectate.IsSpectating(ply) or ply
+  local w, h         = 100, 100         // Width and Height
+  local def_x, def_y = -50, scrh/2       // X and Y position
+  local x, y         = def_x, def_y
+  local alpha        = 200
+  local color        = ColorAlpha(ut_col_pal.WHITE, alpha)
+  local echo_col     = ColorAlpha(ut_col_pal.AZURE, 100)
+  local gap          = 2
+  local t            = 5
   //Easing
   --
 
@@ -79,60 +76,60 @@ local function keyEchoes(ply, scrw, scrh, keyecho)
     y = y - h - gap
     x = x - w - gap
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[7], keys[7].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[7], keys[7].enum, x, y, w, h, t, echo_col, color)
 
     //M2
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     y = y - h - gap -- Move up
     x = x + w + gap -- Move right
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[8], keys[8].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[8], keys[8].enum, x, y, w, h, t, echo_col, color)
 
     // W
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     y = y - h - gap -- Move up
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[1], keys[1].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[1], keys[1].enum, x, y, w, h, t, echo_col, color)
 
     //A
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
 
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[3], keys[3].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[3], keys[3].enum, x, y, w, h, t, echo_col, color)
 
     //S
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     x = x - w - gap -- Move left
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[2], keys[2].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[2], keys[2].enum, x, y, w, h, t, echo_col, color)
 
     //D
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     x = x + w + gap -- Move right
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[4], keys[4].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[4], keys[4].enum, x, y, w, h, t, echo_col, color)
 
     //JUMP
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     x = x - (w/2) - gap -- Move left
     y = y + h + gap -- Move down
     --w = w * 2+ gap
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[5], keys[5].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[5], keys[5].enum, x, y, w, h, t, echo_col, color)
 
     //DUCK
-    x, y = 0, scrh/2 -- Clearing
+    x, y = def_x, def_y -- Clearing
     w, h = 100, 100 -- Clearing
     x = x + w + gap -- Move Right
     y = y + h + gap -- Move down
     --draw.DrawBox(x, y, w, h, Color(0,0,0,alpha))
-    KeyDown(ply, keys[6], keys[6].enum, x, y, w, h, t, echo_col, color)
+    KeyDown(localPly, keys[6], keys[6].enum, x, y, w, h, t, echo_col, color)
 end
 
 presets.create("circle_1", keyEchoes)

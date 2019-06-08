@@ -2,6 +2,39 @@ util = util or {}
 
 util.Math = {}
 
+/*
+  NAME - Conversion
+  FUNCTION - Converts source units to mph or kph
+	ARGS -
+							units - The unit you want to convert
+							unit  - Which conversion you want to use
+											MPH or KPH
+*/
+function util.Math.Conversion(units, unit)
+  if string.lower(unit) == "mph" then
+    local mph = 6.4/150
+    return mph*units
+  elseif string.lower(unit) == "kph" then
+    local kph = (6.4/150)*1.609344
+    return kph*units
+  end
+end
+
+/*
+  NAME - IsNan
+  FUNCTION - Checks if values are nan
+*/
+
+function util.Math.IsNan(...)
+  local args = {...}
+	for k, v in pairs(args) do
+		if string.lower(v) == "nan" then
+			return true
+		end
+	end
+	return false
+end
+
 util.Math.Easing = {}
 --http://wiki.unity3d.com/index.php/Mathfx
 /*

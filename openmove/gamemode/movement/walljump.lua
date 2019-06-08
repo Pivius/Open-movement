@@ -11,6 +11,7 @@ hookAdd("Init_Player_Vars", "Init_Walljump", function(ply)
   ply:AddSettings("rebound_power", 260)
   ply:AddSettings("vertical_power", 200)
   ply:AddSettings("can_walljump", true)
+	ply:AddSettings("can_wj_onplayers", true)
   ply.wj_sync_module = load.Module( "modules/sync.lua" )
 	ply.wj_sync_module.Insert(false, CurTime())
 
@@ -18,18 +19,46 @@ end)
 /*
   NAME      - Player:checkWall
   FUNCTION  - Trace check to see if there our trace collides with anything in a direction(Argument: dir).
+							 Does an extra trace to fix an issue with not being able to wj while sliding on ramps and parkouring on angled surfaces
   ARGS 			-
 		mv  - CMoveData
 	  dir - Direction to trace
 */
 function PLAYER:checkWall(mv, dir)
-	local td = {}
-	td.start = mv:GetOrigin()
-	td.endpos = mv:GetOrigin()-(dir*30)
-	td.filter = self
-	tr = util.TraceLine(td)
-	if (tr.Fraction < 1) and not tr.HitSky then
-		return true, tr.HitNormal
+	local td_long = {}
+	local td_standard = {}
+	local origin = mv:GetOrigin()
+	--Hacky way to fix sliding+wj
+	if self:Sliding() or self:Surfing() then
+		origin.z = origin.z - (2 + 1)
+	end
+	td_long.start = origin
+	td_standard.start = origin
+	td_long.endpos = origin-(dir*42)
+	td_standard.endpos = origin-(dir*30)
+
+	if self:can_wj_onplayers() then
+		td_long.filter = self
+		td_standard.filter = self
+	else
+		local filter = ents.FindByClass( "empty_entity" )
+		table.Merge(filter, player.GetAll())
+		td_long.filter = filter
+		td_standard.filter = filter
+	end
+	local tr_long = util.TraceLine(td_long)
+
+	if (tr_long.Fraction < 1) and not tr_long.HitSky then
+		tr = util.TraceLine(td_standard)
+		if (tr.Fraction < 1) and not tr.HitSky then
+
+			return true, tr.HitNormal
+		else
+			if tr_long.HitNormal:Length() != 1 and tr_long.HitNormal:Length() != 0 and tr_long.HitNormal.z == 0 then
+
+				return true, tr_long.HitNormal
+			end
+		end
 	end
 
 	return false

@@ -7,17 +7,17 @@ end
 
 
 function PLAYER:Speed()
-  local vel = self:GetVelocity()
+  local vel = self:GetVelocity() / self:velocity_scale()
   return vel:Length()/10
 end
 
 function PLAYER:Speed2D()
-  local vel = self:GetVelocity()
+  local vel = self:GetVelocity() / self:velocity_scale()
   return vel:Length2D()/10
 end
 
 function PLAYER:SpeedZ()
-  local vel = self:GetVelocity()
+  local vel = self:GetVelocity() / self:velocity_scale()
   return math.abs(vel.z/10)
 end
 
@@ -61,6 +61,21 @@ hook.Add('PlayerLeftGround', 'LeftGround', function( ply )
   --  print("a")
 end)
 
+// This is for extended useage of calcview.
+// When altering view you should alter the view table.
+local function CalcView( ply, pos, ang, fov, znear, zfar )
+  local view = {
+    ["pos"] = pos,
+    ["angles"] = ang,
+    ["fov"] = fov,
+    ["znear"] = znear,
+    ["zfar"] = zfar,
+  }
+  hookCall("CalcView", ply, pos, ang, fov, znear, zfar, view)
+  return GAMEMODE:CalcView( ply, view.pos, view.angles, view.fov, view.znear, view.zfar )
+end
+hook.Add( 'CalcView', 'view_Update', CalcView )
+
 --Player Regeneration
 function Regen(ply)
     local delay = 1
@@ -81,5 +96,6 @@ hook.Add("PlayerTick", "Regeneration", Regen)
 
 -- For lua refreshing
 for _, player in pairs(player.GetAll()) do
+  --player.settings = {default}
   hookCall("Init_Player_Vars", player)
 end

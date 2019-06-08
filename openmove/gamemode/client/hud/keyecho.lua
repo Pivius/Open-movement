@@ -22,11 +22,11 @@ local a = 0 //avg
 local s = 0 //samples
 local calls = 1000 //calls
 local benchmark = false
-function HUD_KE:Draw3D(ply, scrw, scrh)
+function HUD_KE:Draw3D(ply, scrw, scrh, cx, cy)
   if s <= calls && benchmark then
     bench.Push()
   end
-  presets.load("circle_1", ply, scrw, scrh, keyecho)
+  presets.load("circle_1", ply, scrw, scrh, keyecho, cx, cy)
   if s <= calls && benchmark then
     a = a + bench.Pop()
     s = s+1

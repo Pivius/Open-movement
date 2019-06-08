@@ -1,7 +1,6 @@
 RampSlide = {}
 local Move = FindMetaTable( "CMoveData" )
 local distance = 2
-
 hookAdd("Init_Player_Vars", "Init_rampslide", function(ply)
   ply:AddSettings("Sliding", false)
   ply:AddSettings("SlideNormal", 0.75)
@@ -15,33 +14,66 @@ function RampSlide.PhysicsClipVelocity( inv, normal, out, overbounce )
 	local	change = 0
 	local	angle
 	local	i
-
+	
 	local STOP_EPSILON = 0.1
-
+	
 	angle = normal.z
-
+	
 	backoff = inv:Dot( normal ) * overbounce
 	for i = 1 , 3 do
 		change = normal[i] * backoff
-    out[i] =inv[i] -change
+		out[i] =inv[i] -change
 		if out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON then
 			out[i] = 0
 		end
 	end
 end
 
-function RampSlide.TraceHull(origin, traceEnd, Mins, Maxs)
+function RampSlide.TraceHull(origin, traceEnd, ply)
 
 	return util.TraceHull{
-    start = origin,
+		start = origin,
 		endpos = traceEnd,
-    mins = Mins,
-    maxs = Maxs,
-    mask = MASK_PLAYERSOLID_BRUSHONLY,
-    filter = function(e1, e2)
-      return not e1:IsPlayer()
-    end
-  }
+		mins = ply:OBBMins(),
+		maxs = ply:OBBMaxs(),
+		mask = MASK_PLAYERSOLID_BRUSHONLY,
+		filter = function(e1, e2)
+			return not e1:IsPlayer()
+		end
+	}
+end
+
+function RampSlide.Trace(ply, vel, origin)
+	local pred_vel = vel * FrameTime()
+	local hover_height = distance
+	local slide_trace
+	
+	if !ply:Sliding() and !ply:Surfing() then
+		if 0 > vel.z  and not ply:OnGround() then
+			slide_trace = RampSlide.TraceHull(origin, origin + Vector(0, 0, -hover_height + math.min(pred_vel.z, 0)), ply)
+			
+			if not slide_trace.HitWorld then
+				slide_trace = RampSlide.TraceHull(origin, origin + Vector(pred_vel.x, pred_vel.y, -hover_height + math.min(pred_vel.z, 0)), ply)
+			end
+		else
+			if ply:OnGround() then
+				slide_trace = RampSlide.TraceHull(origin, origin + Vector(0, 0, -hover_height), ply)
+			else
+				slide_trace = RampSlide.TraceHull(origin, origin + Vector(pred_vel.x, pred_vel.y, -hover_height), ply)
+			end
+		end
+	else
+		slide_trace = RampSlide.TraceHull(origin, origin + Vector(0, 0, -hover_height + math.min(pred_vel.z, 0)), ply)
+		
+		if !slide_trace.HitWorld then
+			slide_trace = RampSlide.TraceHull(origin, origin + Vector(pred_vel.x, pred_vel.y, -hover_height + math.min(pred_vel.z, 0) - 0.1), ply)
+		end
+	end
+	
+	if slide_trace.HitNormal == 0 or slide_trace.HitNormal == 1 then
+		return false
+	end
+	return slide_trace
 end
 
 function RampSlide.canSlide(ply, normal, vel, z_slide_vel)
@@ -49,78 +81,57 @@ function RampSlide.canSlide(ply, normal, vel, z_slide_vel)
 	local flSpeedSqr  = vel:Dot( vel )
 	local minSlideVel = 150
 	-- This checks which direction on the ramp the player is moving
-
+	
 	if
-		( 0 > Vector( normal.x, normal.y ):Dot( Vector( vel.x, vel.y ):GetNormalized() ) ) &&
-		( 1 > normal.z ) &&
-		( normal.z > ply:SlideNormal() ) &&
-		( flSpeedSqr > slideVelSqr   ) &&
-		( z_slide_vel > minSlideVel )
+	(( 0 > Vector( normal.x, normal.y ):Dot( Vector( vel.x, vel.y ):GetNormalized() ) ) &&
+	( 1 > normal.z ) &&
+	( normal.z > ply:SlideNormal() ) &&
+	( flSpeedSqr > slideVelSqr   ) &&
+	((!ply:Sliding() and z_slide_vel > minSlideVel) or ply:Sliding())) ||
+	(normal.z > 0.1 and normal.z <= ply:SlideNormal())
 	then
-
-		return true
-	end
-	if ( flSpeedSqr > slideVelSqr ) and ply:Sliding() &&
-	( 0 > Vector( normal.x, normal.y ):Dot( Vector( vel.x, vel.y ):GetNormalized() ) ) &&
-		( 1 > normal.z ) &&
-		( normal.z > ply:SlideNormal() )
-		then
 		return true
 	end
 	return false
 end
 
-function RampSlide.canSurf(ply, normal)
-
-	-- This checks which direction on the ramp the player is moving'
-
-	if ( normal.z > 0.1 ) && ( normal.z <= ply:SlideNormal() ) then
-
-
-		return true
-	end
-	return false
-end
-
-// Stops you from riding the ramps when trying to strafe out.
 function RampSlide.SlideRideFix(mv, cmd, normal)
-	local fmove, smove = cmd:GetForwardMove(), cmd:GetSideMove()
 	local forward, right = mv:GetMoveAngles():Forward(), mv:GetMoveAngles():Right()
-	local wishvel, wishspeed, wishdir
-
-  forward.z, right.z = 0
-  forward:Normalize()
-  right:Normalize()
-  wishvel = (forward*fmove) + (right*smove)
-	wishvel.z = 0
-
-  wishspeed=wishvel
-	wishspeed:Normalize()
-  wishspeed = wishspeed:Length()
-	wishspeed = wishspeed*mv:GetMaxSpeed()
-
-  if (wishspeed > mv:GetMaxSpeed()) then
-		wishvel = wishvel * (mv:GetMaxSpeed()/wishspeed)
-  end
-  wishdir=wishvel
-	local vl = mv:GetVelocity()
-
-	if normal:Dot(wishdir) > 0 && (vl:Dot(normal) > 0) then
+	local wish_vel, wish_speed, wish_dir
+	local vel = mv:GetVelocity()
+	
+	forward.z, right.z = 0
+	forward:Normalize()
+	right:Normalize()
+	wish_vel = (forward * cmd:GetForwardMove()) + (right * cmd:GetSideMove())
+	wish_vel.z = 0
+	
+	wish_speed = wish_vel
+	wish_speed:Normalize()
+	wish_speed = wish_speed:Length()
+	wish_speed = wish_speed * mv:GetMaxSpeed()
+	
+	if wish_speed > mv:GetMaxSpeed() then
+		wish_vel = wish_vel * (mv:GetMaxSpeed()/wish_speed)
+	end
+	
+	wish_dir = wish_vel
+	
+	if normal:Dot(wish_dir) > 0 and vel:Dot(normal) > 0 then
 		return true
 	end
 	return false
 end
 
-// You actually gain speed when you land on a ramp, instead of rng.
 function Move:SlopeFix(trace, vecVelocity, ply)
-  local origVel 			 = vecVelocity -- Original velocity.
+	local origVel 			 = vecVelocity -- Original velocity.
 	local origin				 = self:GetOrigin()
 	local minSlideVel		 = 140
-
-
-	if ( trace.HitNormal.z < 1 )  && ply:OnGround() && (ply:SlopeFix_InAir()) && vecVelocity.z <= 0  then
+	
+	
+	if ( trace.HitNormal.z < 1 ) && (!self:KeyDown(IN_DUCK) or (vecVelocity.z >= -700 and self:KeyDown(IN_DUCK))) && ply:OnGround() && (ply:SlopeFix_InAir()) && vecVelocity.z <= 0  then
 		local vLast = ply:last_vel()
-		vLast.z = vLast.z - (ply:gravity() * FrameTime() * 0.5)
+		vLast.z = vLast.z - (GetConVar( "sv_gravity" ):GetFloat() * FrameTime() * 0.5)
 		local BackOff = vLast:Dot(trace.HitNormal)
 		local change
 		change = trace.HitNormal * BackOff
@@ -134,223 +145,126 @@ function Move:SlopeFix(trace, vecVelocity, ply)
 		if vecVelocity:LengthSqr() > vLast:LengthSqr() then
 			self:SetVelocity(vecVelocity)
 		end
-
+		
 		ply:SlopeFix_InAir(false)
+		
+	end
+end
 
+function Move:SRSlideTest( trace, vecVelocity, ply )
+	local origVel 			 = vecVelocity -- Original velocity.
+	local origin				 = self:GetOrigin()
+	local minSlideVel		 = 140
+	local vecAbsVelocity = Vector()
+	local change
+	// A backoff of 1.0 is a slide.
+	// Anything above 1 makes players bounce.
+	local flBackOff = 1
+	if trace.HitNormal.z <= ply:SlideNormal() // Dont apply the physics on surf ramps
+	|| trace.HitNormal.z == 1	// Or when on flat ground
+	|| !self:KeyDown(IN_DUCK) // Or when not holding duck
+	|| Vector(trace.HitNormal.x, trace.HitNormal.y):Dot(Vector(vecVelocity.x, vecVelocity.y):GetNormalized()) < 0 then // Or when going up a slope
+		ply.DoJump = false
+		--print(ply.TestSlide)
+		ply.TestSlide = false
+		return
+	end
+	
+	if !ply.TestSlide then
+		ply.TestSlide = false
+		
+	else
+		
+	end
+	
+	//Gotta go down at 1000u/s to slide down them
+	if (( trace.HitNormal.z < 1 ) and vecVelocity.z < -700) || ply.TestSlide 	 then
+		RampSlide.PhysicsClipVelocity( vecVelocity, trace.HitNormal, vecAbsVelocity, flBackOff )
+		if !ply.TestSlide then
+			local moveDir = vecVelocity*Vector(1,1,0)
+			moveDir = moveDir	:GetNormalized()
+			// Changes from vertical to horizontal velocity
+			local newVel = Vector((moveDir.x*vecVelocity:Length()), (moveDir.y*vecVelocity:Length()), 0)
+			RampSlide.PhysicsClipVelocity( newVel, trace.HitNormal, vecAbsVelocity, flBackOff )
+		end
+		origin.z = trace.HitPos.z+distance
+		ply:SetGroundEntity( NULL )
+		
+		vecVelocity    = vecAbsVelocity + ply:GetBaseVelocity()
+		ply:Sliding(true)
+		if vecVelocity.z*FrameTime()-origVel.z*FrameTime() < 0 then
+			self:SetVelocity( origVel )
+			self:SetOrigin(origin)
+		else
+			self:SetVelocity( vecVelocity )
+			self:SetOrigin(origin)
+		end
+		ply.TestSlide = true
+		ply.PredTest = CurTime()
+	end
+	if self:KeyPressed(IN_JUMP) or (ply.DoJump) then
+		self:SetVelocity((self:GetVelocity()*Vector(1,1,0)) + Vector(0,0,ply:GetJumpPower()))
+		ply.DoJump = true
 	end
 end
 
 function Move:resolveFlyCollisionSlide( trace, slide_vel, ply )
-	local origin		= self:GetOrigin()
-	local minSlideVel = 120
-  // A backoff of 1.0 is a slide.
-  // Anything above 1 makes players bounce.
-  local flBackOff = 1
-	// Changes the velocity "direction"
 
-	// Slide up ramps that you can walk on when going minSlideVel
-	if RampSlide.canSurf(ply, trace.HitNormal) then
-		ply:SetGroundEntity( NULL )
-		slide_vel = slide_vel + ply:GetBaseVelocity()
-
-		ply:Sliding(false)
-		ply:Surfing(true)
-
-		--origin.x = trace.HitPos.x - (distance * (trace.HitNormal.x*trace.HitNormal.x))
-		--origin.y = trace.HitPos.y - (distance * (trace.HitNormal.y*trace.HitNormal.y))
-		origin.z = trace.HitPos.z + distance
-
-		self:SetVelocity( slide_vel )
-		self:SetOrigin( origin )
+	if (ply:Sliding() || ply:Surfing()) && 0 > (slide_vel.z - self:GetVelocity().z) then
 		return
-	elseif RampSlide.canSlide(ply, trace.HitNormal, slide_vel, slide_vel.z)  then
-		ply:SetGroundEntity( NULL )
-		ply:Surfing(false)
-		ply:Sliding(true)
-		slide_vel = slide_vel + ply:GetBaseVelocity()
-
-		origin.z = trace.HitPos.z + distance
-		self:SetVelocity( slide_vel )
-		self:SetOrigin( origin )
-
 	end
-
-end
-
-function RampSlide.RampSlide_DamageFix(ply)
-	local vel = ply:GetVelocity()
-	local pos = ply:GetPos()
-	local slide_vel = Vector()
-	local slide_trace
-			slide_trace = RampSlide.TraceHull( pos, pos + Vector(
-				vel.x * FrameTime(),
-				vel.y * FrameTime(),
-				(-distance) + (math.min(vel.z * FrameTime(), 0))
-			), ply:OBBMins(), ply:OBBMaxs() )
-
-	RampSlide.PhysicsClipVelocity( vel, slide_trace.HitNormal, slide_vel, 1 )
-
-	if RampSlide.canSurf(ply, slide_trace.HitNormal, vel) or RampSlide.canSlide(ply, slide_trace.HitNormal, vel, slide_vel.z) then
-
-		ply:SetGroundEntity( NULL )
-
+	
+	if RampSlide.canSlide(ply, trace.HitNormal, slide_vel, slide_vel.z) then
+		
+		if (trace.HitNormal.z > 0.1 and ply:SlideNormal() >= trace.HitNormal.z) then
+			ply:Surfing(trace.HitPos)
+			ply:Sliding(false)
+		else
+			ply:Sliding(trace.HitPos)
+			ply:Surfing(false)
+		end
+		
+		if slide_vel.z - self:GetVelocity().z > -100 then
+			local origin = self:GetOrigin()
+			
+			slide_vel = slide_vel + ply:GetBaseVelocity()
+			origin.z = trace.HitPos.z + distance
+			ply:SetGroundEntity(NULL)
+			self:SetVelocity(slide_vel)
+			self:SetOrigin(origin)
+		end
 	end
 end
-hook.Add("OnPlayerHitGround", "RampSlide.RampSlide_DamageFix", RampSlide.RampSlide_DamageFix)
-
 
 function RampSlide.Slide(ply, mv, cmd)
-
 	local vel = mv:GetVelocity()
-	local pred_vel = vel * FrameTime()
 	local origin = mv:GetOrigin()
-	local slide_vel = Vector()
-	local trace_predicted = false
-	local mins, maxs = ply:OBBMins(), ply:OBBMaxs()
-	local slide_trace
-	local pred_trace
-
-	 if !ply.rs_sync then
-    ply.rs_sync = load.Module( "modules/sync.lua" )
-    ply.rs_sync.Insert(false, CurTime())
-  end
-	if !ply:Sliding() && !ply:Surfing() then
-
-		if vel.z < 0 and !ply:OnGround() then
-
-			trace_predicted = true
-			slide_trace = RampSlide.TraceHull( origin, origin + Vector(
-				0,
-				0,
-				(-distance) + (math.min(pred_vel.z, 0))
-			), mins, maxs )
-			if !slide_trace.HitWorld then
-				pred_trace = RampSlide.TraceHull( origin, origin + Vector(
-					pred_vel.x,
-					pred_vel.y,
-					(-distance) + (math.min(pred_vel.z, 0))
-				), mins, maxs )
-				if pred_trace.HitWorld then
-					slide_trace = pred_trace
-				end
-			end
-
-
-		else
-			if ply:OnGround() then
-				slide_trace = RampSlide.TraceHull( origin, origin + Vector(
-				0,
-				0,
-				-distance
-				), mins, maxs )
-			else
-				slide_trace = RampSlide.TraceHull( origin, origin + Vector(
-				pred_vel.x,
-				pred_vel.y,
-				-distance
-				), mins, maxs )
-			end
-		end
-	else
-
-		slide_trace = RampSlide.TraceHull(origin, origin + Vector(
-			0,
-			0,
-			(-distance) + (math.min(pred_vel.z, 0))
-		), mins, maxs )
-
-		if !slide_trace.HitWorld then
-			pred_trace = RampSlide.TraceHull( origin, origin + Vector(
-				pred_vel.x,
-				pred_vel.y,
-				(-distance) + (math.min(pred_vel.z, 0)) - 0.1
-			), mins, maxs )
-			if pred_trace.HitWorld then
-				slide_trace = pred_trace
-			end
-		end
-
-
-	end
-
-
-	local fix = RampSlide.SlideRideFix(mv, cmd, slide_trace.HitNormal)
+	local slide_trace = RampSlide.Trace(ply, vel, origin)
+	local fix
+	local slide_vel = Vector(0, 0, 0)
+	if !slide_trace then return end
+	
+	fix = RampSlide.SlideRideFix(mv, cmd, slide_trace.HitNormal)
 	RampSlide.PhysicsClipVelocity( vel, slide_trace.HitNormal, slide_vel, 1 )
-
-	if slide_trace.HitNormal.z < 1 && !(slide_trace.StartSolid) then
-
-		if
-			RampSlide.canSlide(ply, slide_trace.HitNormal, vel, slide_vel.z) ||
-			RampSlide.canSurf(ply, slide_trace.HitNormal, vel)
-		then
-
-
-			mv:resolveFlyCollisionSlide( slide_trace, slide_vel, ply )
-
-			if fix then
-				mv:SetVelocity(vel)
-				mv:SetOrigin(origin)
-			end
+	if 
+	(1 > slide_trace.HitNormal.z && !slide_trace.StartSolid) and
+	RampSlide.canSlide(ply, slide_trace.HitNormal, vel, slide_vel.z)
+	then
+		mv:resolveFlyCollisionSlide(slide_trace, slide_vel, ply)
+		
+		if fix then
+			mv:SetVelocity(vel)
+			mv:SetOrigin(origin)
 		end
-
-
-		mv:SlopeFix( slide_trace, vel, ply )
-	elseif slide_trace.StartSolid then
-		--mv:SetOrigin(origin-Vector(0,0,-distance))
+		
 	end
-
-	if !RampSlide.canSlide(ply, slide_trace.HitNormal, vel, slide_vel.z) then
-
+	if 1 > slide_trace.HitNormal.z && !slide_trace.StartSolid then
+		--mv:SRSlideTest( slide_trace, vel, ply )
+		mv:SlopeFix( slide_trace, vel, ply )
+	end
+	if not RampSlide.canSlide(ply, slide_trace.HitNormal, vel, slide_vel.z) then
+		ply:Surfing(false)
 		ply:Sliding(false)
 	end
-	if !RampSlide.canSurf(ply, slide_trace.HitNormal, vel) then
-		ply:Surfing(false)
-	end
-
-	ply.rs_sync.Insert(ply:Sliding(), engine.TickCount())
-
+	
 end
-
-
-
-/*
-function rampSlide(ply, mv)
-	local frame_time = FrameTime()
-	local origin = mv:GetOrigin()
-  local Mins = ply:OBBMins()
-  local Maxs = ply:OBBMaxs()
-  local traceEnd = origin * 1
-  local primal_velocity = mv:GetVelocity()
-	local frame_velocity = primal_velocity * frame_time
-	// Predicted next frame movement if going quickly downwards
-	traceEnd.z = ( traceEnd.z - distance ) + math.min( frame_velocity.z, 0 )  // trace a bit further than feet
-	local tL = traceHull(origin, traceEnd, Mins, Maxs)
-		traceEnd.x = (traceEnd.x) + frame_velocity.x
-		traceEnd.y = (traceEnd.y) + frame_velocity.y
-	local tLBkup = traceHull(origin, traceEnd, Mins, Maxs)
-
-		if (tL.HitWorld and tL.HitNormal.z < 1 and tL.HitNormal.z > 0) then
-
-			mv:resolveFlyCollisionSlide( tL, primal_velocity, ply )
-			mv:SRSlideTest( tL, primal_velocity, ply )
-			ply:GroundSlanted(true)
-			traceEnd = mv:GetOrigin() * 1
-			traceEnd.z = ( (traceEnd.z - distance) + math.min( mv:GetVelocity().z*frame_time, 0 ))
-			traceEnd.x = (traceEnd.x) + mv:GetVelocity().x*frame_time
-			traceEnd.y = (traceEnd.y) + mv:GetVelocity().y*frame_time
-			local tlGrav = traceHull(origin, traceEnd, Mins, Maxs)
-			if (tlGrav.HitWorld and tlGrav.HitNormal.z < 1 and tlGrav.HitNormal.z > 0) then
-				mv:resolveFlyCollisionSlide( tlGrav, mv:GetVelocity(), ply )
-			end
-		elseif (tLBkup.HitWorld and tLBkup.HitNormal.z < 1 and tLBkup.HitNormal.z > 0) then
-			mv:resolveFlyCollisionSlide( tLBkup, primal_velocity, ply )
-			mv:SRSlideTest( tLBkup, primal_velocity, ply )
-			ply:GroundSlanted(true)
-		else
-			ply.TestSlide = false
-			ply:Sliding(false)
-			ply:GroundSlanted(false)
-
-		end
-
-end*/

@@ -3,7 +3,7 @@ Open source movement gamemode.
 
 To switch between movement modes you use the console command:
     
-    mm_mode 1-5
+    mm_mode 1-7
 
     1. Parkour
     2. Grapple

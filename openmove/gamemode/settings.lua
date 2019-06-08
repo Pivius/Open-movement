@@ -32,12 +32,13 @@ else
     local str = net.ReadString()
     local target = net.ReadEntity()
     local ply = net.ReadEntity()
-
-    net.Start("Settings_Grab")
-      net.WriteString(str)
-      net.WriteType( target.settings[str] )
-      net.WriteEntity(target)
-    net.Send(ply)
+    if IsValid(ply) and IsValid(target) then
+      net.Start("Settings_Grab")
+        net.WriteString(str)
+        net.WriteType( target.settings[str] )
+        net.WriteEntity(target)
+      net.Send(ply)
+    end
   end)
 end
 /*
@@ -47,6 +48,7 @@ end
     SET: player:name(var)
 */
 function PLAYER:AddSettings(name, default)
+
   if !self:IsValid() then return end
   if !self.settings then
     self.settings = {default}
@@ -63,13 +65,14 @@ function PLAYER:AddSettings(name, default)
     local copy = getmetatable(name)
     local createFunc = {}
     createFunc  = {
-    	[name] = function( self, var )
+    	[name] = function( player, var )
+
         if !var and !isbool(var) then
 
-          return self.settings[name]
+          return player.settings[name]
         elseif var or isbool(var) then
 
-          self.settings[name] = var
+          player.settings[name] = var
         end
     	end
     }

@@ -8,7 +8,7 @@ hookAdd("Init_Player_Vars", "Init_Grapple", function(ply)
   ply:AddSettings("AllowGrapple", true)        -- Decides if the player can grapple
   ply:AddSettings("Grappling", false)          -- Is the player grappling or not
   ply:AddSettings("Retracting", false)         -- Is the player retracting or not
-  ply:AddSettings("RetractSpeed", 50)         -- The speed the player retracts at
+  ply:AddSettings("RetractSpeed", 25)         -- The speed the player retracts at
   ply:AddSettings("RopeTension", 0)            -- Rope tension
   ply:AddSettings("RopeLength", 0)             -- Rope length
   ply:AddSettings("GrappleSync", {})           -- Sync table
@@ -200,7 +200,7 @@ function Hook(ply, mv, cmd)
 
   // Nerfing S formations
   if mv:GetOrigin().z > ply:GrapplePos().z then
-    ply:RetractSpeed(25)
+    ply:RetractSpeed(ply.default["RetractSpeed"]/2)
   else
     ply:RetractSpeed(ply.default["RetractSpeed"])
   end

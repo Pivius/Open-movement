@@ -37,19 +37,19 @@ local function HealthDisplay(ply, scrw, scrh)
   end
   HP_fade_ease:Target({["hp_w"] = hp_width}, true)
   // Draws the boxes
-  draw.DrawBox(x, y + (h / 2) - (h / 2), w, h, Color(0, 0, 0, math.Clamp(alpha, 0, 100)))
-  draw.DrawBox(x, y + (h / 2) - (h / 2), math.Clamp(HP_fade_ease:get().hp_w, -w, w), h, ColorAlpha(color, math.Clamp(color.a - 200, 0 ,255)))
-  draw.DrawBox(x, y + (h / 2) - (h / 2), math.Clamp(HP_ease:get().hp_w, -w, w), h, color)
+  draw_lib.DrawBox(x, y + (h / 2) - (h / 2), w, h, Color(0, 0, 0, math.Clamp(alpha, 0, 100)))
+  draw_lib.DrawBox(x, y + (h / 2) - (h / 2), math.Clamp(HP_fade_ease:get().hp_w, -w, w), h, ColorAlpha(color, math.Clamp(color.a - 200, 0 ,255)))
+  draw_lib.DrawBox(x, y + (h / 2) - (h / 2), math.Clamp(HP_ease:get().hp_w, -w, w), h, color)
 
   //Text
   SetFont("HUD Health", {
-    font = "Trebuchet24",
-    weight = 600,
+    font = "Gidole",
+
     size = 50
   })
   surface.SetTextColor( color )
   local hpX, hpY = surface.GetTextSize( math.Round( hp ) )
-  draw.Text(math.Round( hp ), math.Clamp(x + (w / 2), -9999, hpX), y - 10, 2, 1, 0.9)
+  draw_lib.Text(math.Round( hp ), math.Clamp(x + (w / 2), -9999, hpX), y - 10, 2, 1, 0.9)
 end
 
 presets.create("health_default", HealthDisplay)

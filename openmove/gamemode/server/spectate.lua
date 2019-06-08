@@ -152,9 +152,8 @@ function Spectate.EndSpec(ply)
   local target = ply:GetObserverTarget()
   Spectate.AddPlayer(target)
   Spectate.AddPlayer(ply)
-  if !Spectate.Players[ply]["Incognito"] then
-    table.RemoveByValue(Spectate.Players[target]["Spectators"], ply)
-  end
+  if !Spectate.Players[target] then return end
+  ut_tbl.RemoveByValue(Spectate.Players[target]["Spectators"], ply)
   Spectate.Players[ply]["Spectating"] = false
 
   ply:Spectate(0)

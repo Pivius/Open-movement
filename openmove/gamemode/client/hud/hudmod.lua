@@ -17,9 +17,10 @@ local function viewUpdate( ply, pos, ang, fov, znear, zfar )
     ply.FOV = fov
     ply.vAng = ang
     ply.vPos = pos
+    return
   end
 end
-hook.Add( 'CalcView', 'view_Update', viewUpdate )
+hookAdd( 'CalcView', 'hudmod_view', viewUpdate )
 
 
 function hudmod.finishMove(ply, mv)
@@ -157,12 +158,12 @@ function PANEL:Tilt()
 end
 
 function PANEL:DrawCam()
-
+  local cx, cy = input.GetCursorPos()
   local x, y = self:GetPos()
   local camPos = hudmod.getViewPos() + self.offsetCam
   local camAng = hudmod.getViewAngle()
   local aspectRatio = ScrW()/ScrH()
-  local distance = hudmod.getZNear() * self.Distance * 160
+  local distance = hudmod.getZNear() * 1.65 * 160
   local frustH = 2 * (distance) * (math.tan( math.rad(90*0.5) ))
   local frustW  = frustH * aspectRatio
   --local aRatio = (frustW-frustH)/(ScrW()-ScrH())
@@ -177,9 +178,9 @@ function PANEL:DrawCam()
   --camPos = camPos+zOffset+xOffset+yOffset
   --local xOffset = ang:Right()
 
-  local xOffset = ang:Right()
+  local xOffset = ang:Right()--*(self.sideAng*math.abs(self.sideAng))
   local yOffset = ang:Up()
-  local zOffset = (ang:Forward()*distance) * fARatio
+  local zOffset = (ang:Forward()*distance) * aspectRatio
   camPos = camPos+zOffset+yOffset+xOffset
   --pos = pos - self.movementOffset
   ang:RotateAroundAxis( ang:Right(), 90+(self.upAng-self.offsetUp*2.5) )
@@ -187,16 +188,23 @@ function PANEL:DrawCam()
   ang:RotateAroundAxis( ang:Up(), -90)
   self.ScrW = frustW/2
   self.ScrH = frustH/2
+
+
+  cx = (cx - ScrW()/2) * (frustW / ScrW())
+  cy = (cy - ScrH()/2) * (frustH / ScrH())
+
+
+
   cam.Start3D( hudmod.getViewPos(), camAng, 90)
     surface.DisableClipping(true)
       cam.Start3D2D( camPos, ang, 1)
         cam.IgnoreZ(true)
-          self:Draw3D(LocalPlayer(), frustW/2, frustH/2)
+          self:Draw3D(LocalPlayer(), self.ScrW, self.ScrH, cx, cy)
         cam.IgnoreZ(false)
       cam.End3D2D()
     surface.DisableClipping(false)
   cam.End3D()
-  self.spin = self.spin + 10
+  --self.spin = self.spin + 10
 end
 
 function PANEL:Draw3D(ply, scrw, scrh)

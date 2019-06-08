@@ -38,6 +38,7 @@ function keyEnum:KeyDown(ply, enum)
     if ply == LocalPlayer() then
       return ply:KeyDown(enum)
     else
+
       return GetGlobalBool( (ply:UserID()).."_KeyDown_".. ut_tbl.GetByValue(keyEnum.keys, enum), false )
     end
   else

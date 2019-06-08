@@ -157,9 +157,9 @@ function WallSlide(ply, mv, cmd)
     ply:StartSlide(cur_time, mv:GetVelocity(), tick_count, mv:GetOrigin())
 
   end
-  if (((ply:slide_time()+1 < cur_time) || !can_slide ) && (ply:is_sliding()) )  then
+  if (((ply:slide_time()+10  < cur_time) || !can_slide ) && (ply:is_sliding()) )  then
       ply:StopSlide(cur_time, tick_count)
-      if (ply:slide_time()+1 < cur_time) then
+      if (ply:slide_time()+10  < cur_time) then
         ply:try_slide(false)
       end
   end

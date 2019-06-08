@@ -1,8 +1,7 @@
-draw = draw or {}
+draw_lib = {}
 local surface = surface
 local DrawRect = surface.DrawRect
 local SetDrawColor = surface.SetDrawColor
-local DrawPoly = surface.DrawPoly
 /*
   NAME      - Text
   FUNCTION  - Draws text
@@ -17,7 +16,7 @@ local DrawPoly = surface.DrawPoly
     xstep - Moves the text X amount of times by it's text width
     ystep - Moves the text X amount of times by it's text height
 */
-function draw.Text(text, x, y, align, xstep, ystep)
+function draw_lib.Text(text, x, y, align, xstep, ystep)
   local tx_original, ty_original = surface.GetTextSize( text )
   if !xstep then xstep = 1 end
   if !ystep then ystep = 0 end
@@ -50,7 +49,7 @@ end
     h - Height
     t - Thickness
 */
-function draw.Outline(x, y, w, h, t)
+function draw_lib.Outline(x, y, w, h, t)
   if not !t then t = 1 end
   DrawRect(x, y, w, t)
   DrawRect(x, y + (h - t), w, t)
@@ -69,10 +68,10 @@ end
     t      - Thickness
     outcol - Outline Color
 */
-function draw.OutlinedBox(x, y, w, h, t, outcol)
+function draw_lib.OutlinedBox(x, y, w, h, t, outcol)
   if not !t then t = 1 end
   surface_DrawRect(x + 1, y + 1, w - 2, h - 2)
-  draw.Outline(x, y, w, h, t)
+  draw_lib.Outline(x, y, w, h, t)
 end
 
 /*
@@ -85,9 +84,26 @@ end
     h      - Height
     col    - Color
 */
-function draw.DrawBox(x, y, w, h, col)
+function draw_lib.DrawBox(x, y, w, h, col)
   SetDrawColor( col )
   DrawRect( x, y, w, h )
+end
+
+/*
+  NAME      - DrawPoly
+  FUNCTION  - Draws box
+  ARGS 			-
+    x      - X Position
+    y      - Y Position
+    w      - Width
+    h      - Height
+    col    - Color
+*/
+function draw_lib.DrawPoly(vertices, col)
+  print(col)
+  if !col then col = Color(255,255,255, 255) end
+  SetDrawColor( col )
+  surface.DrawPoly( vertices )
 end
 
 /*
@@ -110,19 +126,19 @@ local tex_corner16	= surface.GetTextureID( "gui/corner16" )
 local tex_corner32	= surface.GetTextureID( "gui/corner32" )
 local tex_corner64	= surface.GetTextureID( "gui/corner64" )
 local tex_corner512	= surface.GetTextureID( "gui/corner512" )
-function draw.DrawRoundedBox(x, y, w, h, col, bordersize, tl, tr, bl, br)
+function draw_lib.DrawRoundedBox(x, y, w, h, col, bordersize, tl, tr, bl, br)
 	-- Do not waste performance if they don't want rounded corners
 	if ( bordersize <= 0 ) then
-		draw.DrawBox(x, y, w, h, col)
+		draw_lib.DrawBox(x, y, w, h, col)
 		return
 	end
 
 	bordersize = math.min( math.Round( bordersize ), math.floor( w / 2 ) )
 
 	-- Draw as much of the rect as we can without textures
-  draw.DrawBox(x + bordersize, y, w - bordersize * 2, h, col)
-  draw.DrawBox(x, y + bordersize, bordersize, h - bordersize * 2, col)
-  draw.DrawBox(x + w - bordersize, y + bordersize, bordersize, h - bordersize * 2, col)
+  draw_lib.DrawBox(x + bordersize, y, w - bordersize * 2, h, col)
+  draw_lib.DrawBox(x, y + bordersize, bordersize, h - bordersize * 2, col)
+  draw_lib.DrawBox(x + w - bordersize, y + bordersize, bordersize, h - bordersize * 2, col)
 
 	local tex = tex_corner8
 	if ( bordersize > 8 ) then tex = tex_corner16 end
@@ -135,25 +151,25 @@ function draw.DrawRoundedBox(x, y, w, h, col, bordersize, tl, tr, bl, br)
 	if ( tl ) then
 		surface.DrawTexturedRectUV( x, y, bordersize, bordersize, 0, 0, 1, 1 )
 	else
-    draw.DrawBox(x, y, bordersize, bordersize, col)
+    draw_lib.DrawBox(x, y, bordersize, bordersize, col)
 	end
 
 	if ( tr ) then
 		surface.DrawTexturedRectUV( x + w - bordersize, y, bordersize, bordersize, 1, 0, 0, 1 )
 	else
-    draw.DrawBox(x + w - bordersize, y, bordersize, bordersize, col)
+    draw_lib.DrawBox(x + w - bordersize, y, bordersize, bordersize, col)
 	end
 
 	if ( bl ) then
 		surface.DrawTexturedRectUV( x, y + h -bordersize, bordersize, bordersize, 0, 1, 1, 0 )
 	else
-    draw.DrawBox(x, y + h - bordersize, bordersize, bordersize, col)
+    draw_lib.DrawBox(x, y + h - bordersize, bordersize, bordersize, col)
 	end
 
 	if ( br ) then
 		surface.DrawTexturedRectUV( x + w - bordersize, y + h - bordersize, bordersize, bordersize, 1, 1, 0, 0 )
 	else
-    draw.DrawBox(x + w - bordersize, y + h - bordersize, bordersize, bordersize, col)
+    draw_lib.DrawBox(x + w - bordersize, y + h - bordersize, bordersize, bordersize, col)
 	end
 end
 
@@ -168,13 +184,13 @@ end
     radius    - Radius
     roughness - Roughness step
 */
-function draw.Circle(x, y, startang, endang, radius, roughness)
+function draw_lib.Circle(x, y, startang, endang, radius, roughness)
   local vertices = {}
   for degree=startang,endang,roughness do
     local x1,y1 = math.cos(math.rad(degree)) * radius + x, math.sin(math.rad(degree)) * radius + y
     table.insert(vertices, {x = x1,y = y1})
   end
-  DrawPoly(vertices)
+  surface.DrawPoly(vertices)
 end
 
 /*
@@ -189,7 +205,7 @@ end
     thickness - Thickness
     roughness - Roughness step
 */
-function draw.OutlineCircle(x, y, startang, endang, radius, thickness, roughness, modifier)
+function draw_lib.OutlineCircle(x, y, startang, endang, radius, thickness, roughness, modifier)
   if !modifier then modifier = 1 end
   startang = math.Clamp( startang or 0, 0, 360 );
     endang = math.Clamp( endang or 360, 0, 360 );

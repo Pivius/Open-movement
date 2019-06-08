@@ -107,12 +107,11 @@ local function UpdateValues(vel, tbl)
   end
 end
 local x, y, w, h = nil, nil, nil, nil
-local function SpeedDisplay(ply, scrw, scrh)
+local function SpeedDisplay(ply, scrw, scrh, hud, cx, cy)
   if !x or !y or !w or !h then
     w, h     = 300, 120                      // Width and Height
     x, y     = scrw - 500, scrh - 300-120      // X and Y position
   end
-
   local localPly     = Spectate.IsSpectating(ply) or ply
   local vel          = localPly:Speed2D()
   local color        = ColorAlpha(vel_color, 255)
@@ -122,10 +121,11 @@ local function SpeedDisplay(ply, scrw, scrh)
   if topspeed == 0 and top > 0 then
     topspeed = top
   end
-  --draw.DrawBox(x, y + (h / 2) - (h / 2), -w, h, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
+  --draw_lib.DrawBox(x, y + (h / 2) - (h / 2), -w, h, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
   -- Border
-  draw.DrawBox(x, y-2, -w, 2, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
-  draw.DrawBox(x, y + (h) , -w, 2, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
+
+  draw_lib.DrawBox(x, y-2, -w, 2, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
+  draw_lib.DrawBox(x, y + (h) , -w, 2, Color(0, 0, 0, math.Clamp(color.a, 0, 100)))
   if #t > 1 then
     vel = ut_ease.Constant(0.25, vel_graph[#t]["vel"], vel)
   end
@@ -154,7 +154,7 @@ local function SpeedDisplay(ply, scrw, scrh)
       end
       if vel_height != 0 then
         --if lowest_height <= vel_height then
-          draw.DrawBox(new_x, y - vel_height + h, max(w/vel_graph_samples, 1), vel_height , ColorAlpha(graph_fill_color, fade))
+          draw_lib.DrawBox(new_x, y - vel_height + h, max(w/vel_graph_samples, 1), vel_height , ColorAlpha(graph_fill_color, fade))
       end
 
     end
@@ -174,7 +174,7 @@ local function SpeedDisplay(ply, scrw, scrh)
         end
       end
 
-      draw.DrawBox(new_x, (y - (vel_height+ math.abs(last_vel_height - vel_height)) + h) - graph_outline_thickness, max(w/vel_graph_samples, 1), (graph_outline_thickness + math.abs(last_vel_height - vel_height)) , ColorAlpha(graph_outline_color, fade))
+      draw_lib.DrawBox(new_x, (y - (vel_height+ math.abs(last_vel_height - vel_height)) + h) - graph_outline_thickness, max(w/vel_graph_samples, 1), (graph_outline_thickness + math.abs(last_vel_height - vel_height)) , ColorAlpha(graph_outline_color, fade))
     end
   end
 
@@ -190,17 +190,16 @@ local function SpeedDisplay(ply, scrw, scrh)
     })
     surface.SetTextColor( ut_col_pal.WHITE )
     local velX, velY = surface.GetTextSize( math.Round( top ) )
-    draw.Text(math.Round( top ), x + (graph_max * sample_width) - sample_width - w, y - (vel_graph[graph_max]["vel"]*(h/math.max(topspeed, 100))) + h, 2, 1, 0.9)
+    surface.Text(math.Round( top ), x + (graph_max * sample_width) - sample_width - w, y - (vel_graph[graph_max]["vel"]*(h/math.max(topspeed, 100))) + h, 2, 1, 0.9)
   end
   */
   SetFont("HUD Vel", {
-    font = "Trebuchet24",
-    weight = 600,
+    font = "Gidole",
     size = 30
   })
   surface.SetTextColor( color )
   local velX, velY = surface.GetTextSize( math.Round( localPly:Speed2D() ) )
-  draw.Text(math.Round( localPly:Speed2D() ), x , y - (vel_graph[#vel_graph]["vel"]*(h/math.max(topspeed, 100))) + h, 2, 1, 0.9)
+  draw_lib.Text(math.Round( localPly:Speed2D() ), x , y - (vel_graph[#vel_graph]["vel"]*(h/math.max(topspeed, 100))) + h, 2, 1, 0.9)
 end
 
 presets.create("velocity_graph", SpeedDisplay)

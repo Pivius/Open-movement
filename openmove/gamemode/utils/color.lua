@@ -252,11 +252,13 @@ end
   ... - Color arguments
 */
 function util.Color.Darken(amount, ...)
+
   local h,s,l,a = util.Color.RGBtoHSL(...)
   return util.Color.HSLtoRGB(h,s,l-amount,a)
 end
 
 function COLOR_META:Darken(a)
+
   self = util.Color.Darken(a, self)
   return self
 end

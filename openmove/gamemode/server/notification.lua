@@ -5,9 +5,6 @@ Notifications = {
   ["Unidentified ID"] = "[Notifications] Could not find |1|\n",
   ["Created Item"] = "[Notifications] Created Item |1|\n",
 
-  ["Admin Success Command"] = "You have successfully executed |1|\n",
-  ["Admin Error Command"] = "Failed to execute |1|\n",
-  ["Admin In Perm"] = "Insufficient permissions\n"
 }
 
 function Notifications:Get( id, args )

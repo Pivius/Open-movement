@@ -23,28 +23,6 @@ function InitalizeFonts()
     */
 end
 
-/*
-  NAME - TblCompare
-  FUNCTION - Compares two tables
-*/
-
-local function TblCompare(tbl1,tbl2)
-	for k, v in pairs( tbl1 ) do
-		if ( type(v) == "table" and type(tbl2[k]) == "table" ) then
-			if ( !UT:TblCompare( v, tbl2[k] ) ) then return false end
-		else
-			if ( v != tbl2[k] ) then return false end
-		end
-	end
-	for k, v in pairs( tbl2 ) do
-		if ( type(v) == "table" and type(tbl1[k]) == "table" ) then
-			if ( !UT:TblCompare( v, tbl1[k] ) ) then return false end
-		else
-			if ( v != tbl1[k] ) then return false end
-		end
-	end
-	return true
-end
 
 -- Creates fonts based on size
 function SetFont(unique, tbl)
