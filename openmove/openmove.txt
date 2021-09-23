@@ -1,0 +1,6 @@
+"openmove"
+{
+	"title"		"openmove"
+	"base"		"base"
+	"menusystem"	"1"
+}
